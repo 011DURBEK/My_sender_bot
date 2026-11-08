@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: telegram-sender-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python controller_bot.py
+    plan: free
