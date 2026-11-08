@@ -1,0 +1,21 @@
+# Maxfiy ma'lumotlar va sessiyalar (Git'ga sira tushmasligi kerak!)
+credentials.json
+.env
+*.session
+*.session-journal
+me.session*
+bot.session*
+
+# Virtual environment & Python keshlari
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Vaqtinchalik audio fayllar
+*.ogg
+*.mp3
+*.mp4
+*.wav
+last_voice.*
