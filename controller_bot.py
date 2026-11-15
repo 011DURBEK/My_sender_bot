@@ -173,7 +173,7 @@ async def on_user_incoming_message(event):
     if msg.voice or msg.video_note:
         dur = int(getattr(getattr(msg, "file", None), "duration", 0) or 0)
         belgi = "⭕️ Dumaloq video" if msg.video_note else "🎙 Ovozli xabar"
-        groq_key = cfg.get("groq_key", "").strip()
+        groq_key = (os.getenv("GROQ_KEY") or cfg.get("groq_key", "")).strip()
         text_out = None
 
         if groq_key:
@@ -408,7 +408,7 @@ async def bot_message_handler(event):
     if not target_id:
         if event.voice or event.video_note or (event.media and hasattr(event.media, "document") and "audio" in getattr(event.media.document, "mime_type", "")):
             cfg = load_config()
-            groq_key = cfg.get("groq_key", "").strip()
+            groq_key = (os.getenv("GROQ_KEY") or cfg.get("groq_key", "")).strip()
             if not groq_key:
                 await event.respond("🎙 Ovozni matnga aylantirish uchun avval `/groq <kalit>` deb Groq API kalitini kiritishingiz kerak.")
                 return
@@ -582,7 +582,7 @@ async def start_health_server(port: int):
     """Bulutli platformalar (Render, Koyeb) uchun fon health-check serveri"""
     async def handle_client(reader, writer):
         try:
-            await reader.readline()
+            await reader.read(1024)
             body = '{"status":"ok","bot":"online"}'
             response = (
                 f"HTTP/1.1 200 OK\r\n"
@@ -596,19 +596,29 @@ async def start_health_server(port: int):
         except Exception:
             pass
         finally:
-            writer.close()
             try:
+                writer.close()
                 await writer.wait_closed()
             except Exception:
                 pass
 
-    server = await asyncio.start_server(handle_client, "0.0.0.0", port)
-    print(f"🌐 Health-check serveri {port}-portda tinglamoqda...")
-    async with server:
-        await server.serve_forever()
+    try:
+        server = await asyncio.start_server(handle_client, "0.0.0.0", port)
+        print(f"🌐 Health-check serveri {port}-portda tinglamoqda...")
+        async with server:
+            await server.serve_forever()
+    except Exception as e:
+        print(f"Health server xatosi ({port}-port): {e}")
 
 
 async def main():
+    if not SESSION_STRING and not os.path.exists(os.path.join(BASE, "me.session")):
+        print("=" * 60)
+        print("❌ XATOLIK: SESSION_STRING muhit o'zgaruvchisi topilmadi!")
+        print("Render.com boshqaruv panelida (Environment) SESSION_STRING ni kiritishingiz kerak.")
+        print("=" * 60)
+        return
+
     print("User client ishga tushmoqda...")
     await user_client.start()
     print("Bot client ishga tushmoqda...")
@@ -621,7 +631,7 @@ async def main():
         user_client.run_until_disconnected(),
         bot.run_until_disconnected()
     ]
-    port_env = os.getenv("PORT")
+    port_env = os.getenv("PORT", "10000")
     if port_env and port_env.isdigit():
         tasks.append(start_health_server(int(port_env)))
 

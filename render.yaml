@@ -1,7 +1,22 @@
 services:
   - type: web
-    name: telegram-sender-bot
+    name: My_sender_bot
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: python controller_bot.py
     plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: ALLOWED_USER_ID
+        sync: false
+      - key: SESSION_STRING
+        sync: false
+      - key: GROQ_KEY
+        sync: false
